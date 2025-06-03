@@ -10,6 +10,34 @@ go get github.com/rsgcata/go-fs
 
 ## Packages
 
+### fs
+
+The `fs` package provides a platform-agnostic way to create file locks.
+
+#### Usage
+
+```go
+import (
+	"github.com/rsgcata/go-fs"
+)
+
+// Create a new file lock (automatically uses the appropriate implementation for your OS)
+lock := fs.New("myfile.lock")
+```
+
+#### API Reference
+
+**New Function**
+
+```go
+// New creates a new FileLock for the specified file path
+func New(path string) filelock.FileLock
+```
+
+This function returns a platform-specific implementation of the FileLock interface based on the current operating system:
+- On Windows, it returns a windows.FileLock
+- On Unix/Linux/macOS, it returns a unix.FileLock
+
 ### filelock
 
 The `filelock` package provides thread-safe file locking functionality in non-blocking mode. It allows for acquiring exclusive locks on files without blocking indefinitely.
@@ -22,7 +50,45 @@ The `filelock` package provides thread-safe file locking functionality in non-bl
 
 #### Usage Examples
 
-**Basic Usage**
+**Platform-Agnostic Usage (Recommended)**
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/rsgcata/go-fs"
+)
+
+func main() {
+	// Create a new file lock (automatically uses the appropriate implementation for your OS)
+	lock := fs.New("myfile.lock")
+
+	// Try to acquire the lock (non-blocking)
+	err := lock.Lock()
+	if err != nil {
+		log.Fatalf("Failed to acquire lock: %v", err)
+	}
+
+	fmt.Println("Lock acquired")
+
+	// Do some work with the locked file
+	// ...
+
+	// Release the lock
+	err = lock.Unlock()
+	if err != nil {
+		log.Fatalf("Failed to release lock: %v", err)
+	}
+
+	fmt.Println("Lock released")
+}
+```
+
+**Platform-Specific Usage (Legacy)**
 
 ```go
 package main
@@ -72,13 +138,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/rsgcata/go-fs/filelock/unix"
-	// For Windows: "github.com/rsgcata/go-fs/filelock/windows"
+	"github.com/rsgcata/go-fs"
 )
 
 func main() {
-	lock := unix.New("myfile.lock")
-	// For Windows: lock := windows.New("myfile.lock")
+	// Create a new file lock (automatically uses the appropriate implementation for your OS)
+	lock := fs.New("myfile.lock")
 
 	// Try to acquire the lock with a 5-second timeout
 	err := lock.LockWithTimeout(5 * time.Second)
@@ -115,17 +180,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rsgcata/go-fs"
 	"github.com/rsgcata/go-fs/filelock"
-	"github.com/rsgcata/go-fs/filelock/unix"
-	// For Windows: "github.com/rsgcata/go-fs/filelock/windows"
 )
 
 func main() {
-	lock1 := unix.New("myfile.lock")
-	lock2 := unix.New("myfile.lock")
-	// For Windows:
-	// lock1 := windows.New("myfile.lock")
-	// lock2 := windows.New("myfile.lock")
+	// Create two lock instances for the same file
+	lock1 := fs.New("myfile.lock")
+	lock2 := fs.New("myfile.lock")
 
 	// Acquire the lock with the first instance
 	err := lock1.Lock()
