@@ -281,3 +281,6 @@ type FileLock interface {
 - Windows: `github.com/rsgcata/go-fs/filelock/windows`
 
 Each implementation provides a `New(path string)` function that returns a new FileLock instance for the specified file path.
+  
+  
+**See _examples folder for some basic usage**
